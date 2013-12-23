@@ -9,26 +9,22 @@ def find_value(Tinitial, volt, s):
     diffT=1
     final=xalglib.spline1dintegrate(s, Tinitial+diffT)
     diffV=final-start
-    while (diffV-volt)>0.01:
+    while math.fabs(diffV-volt)>0.0001:
         if diffV>volt:
             diffT=diffT / 2
         else:
-            diffT = diffT * 1.5
-        
+            diffT=diffT * 1.5
         final=xalglib.spline1dintegrate(s, Tinitial+diffT)
         diffV=final-start
     return diffT
 
 def read_data(T, V, s):
-    for x in T: 
-        Temp=float(x)
-
     factor=100
     result=[]
-    for y in V:
-        Volt=float(y)*1000000/factor
-        result.append(find_value(Temp, Volt, s))
-    return Temp, result
+    for i in range(len(T)):
+        Volt=float(V[i])*1000000/factor
+        result.append(find_value(float(T[i]), Volt, s))
+    return T, result
 
 def read_thermalC():
     Temperature, mVolt=[],[]
@@ -63,21 +59,26 @@ def main():
     Temperature, uVolt=read_thermalC()  
     s = xalglib.spline1dbuildlinear(Temperature, uVolt)
 
-    Temp, diffT=read_data(Temperature, uVolt, s)
+    print(str(len(T))+" data input")
 
+    Temp, diffT=read_data(T, CVolt, s)
+    # output to a file
     Fname=F.name[:-4]
     Fname=Fname+"(output).dat"
     Foutput=open(Fname, 'w')
     Foutput.write('Temperature') 
     Foutput.write('\t')
     Foutput.write('DeltaTemperature')
+    Foutput.write('\t')
+    Foutput.write('HeatCapacity')
     Foutput.write('\n')
     for i in range(len(Temp)):
         Foutput.write(str(Temp[i]))
         Foutput.write('\t')
         Foutput.write(str(diffT[i]))
+        Foutput.write('\t')
+        Foutput.write(str(1/diffT[i]))
         Foutput.write('\n')
-
         
 if __name__ =="__main__":
     main()
