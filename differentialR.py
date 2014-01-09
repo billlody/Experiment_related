@@ -1,3 +1,4 @@
+# unfinished
 import xalglib
 import math
 import os.path    
@@ -28,8 +29,8 @@ def drange(start, stop, step):
         r += step
     return result
 
-# output file, temperature, resistivity, 1st order der, file name
-def outputfile(x, y1, y2, Fname):
+# output file, temperature, resistivity, temperature, 1st order der, file name
+def outputfile(x1, y1, y2, Fname):
     Foutput=open(Fname, 'w')
     Foutput.write('Temperature') 
     Foutput.write('\t')
@@ -37,14 +38,27 @@ def outputfile(x, y1, y2, Fname):
     Foutput.write('\t')
     Foutput.write('1st order derivative')
     Foutput.write('\n')
-    for i in range(len(x)):
-        Foutput.write(str(x[i]))
+    for i in range(len(x1)):
+        Foutput.write(str(x1[i]))
         Foutput.write('\t')
         Foutput.write(str(y1[i]))
         Foutput.write('\t')
         Foutput.write(str(y2[i]))
         Foutput.write('\n')
     Foutput.close()
+
+def take_deriv(T, R):
+    dR=[]
+    temp=T[0], (R[1]-R[0])
+    dR.append(temp)
+    for i in range(len(T)-2):
+        temp1=(R[i+1]-R[i]) / (T[i+1]-T[i])
+        temp2=(R[i+2]-R[i+1]) / (T[i+2]-T[i+1])
+        temp=T[i+1], (temp1*0.5 + temp2*0.5)
+        dR.append(temp)
+    temp=T[-1], ((R[-1]-R[-2])/(T[-1]-T[-2]))
+    dR.append(temp)
+    return dR
 
 def main():
     F=open('1stP-1mA-7.32Hz-ResistivityF.dat')
@@ -67,21 +81,16 @@ def main():
     result_S=sorted(result, key=lambda tup: tup[0])
 
     T, R=average_data(result_S, 50)
-
-    p=xalglib.polynomialbuild(T, R)
-    xT=drange(min(T), max(T), 0.1)
-    volt, diff=[], []
-    for x in xT:
-        v, dv=xalglib.barycentricdiff1(p, x)
-        volt.append(v)
-        diff.append(dv)
-    print(volt[100], diff[100])
-    print(str(len(T))+" data input")
+    dR=take_deriv(T, R)
+    T_d, R_d=average_data(dR, 50)
 
     # output to a file
     Fname=F.name[:-4]
-    Fname=Fname+"(output).dat"
-    outputfile(xT, volt, diff, Fname)
+    Fname=Fname+"(output)1.dat"
+    outputfile(T, R, R, Fname)
+    Fname=F.name[:-4]
+    Fname=Fname+"(output)2.dat"
+    outputfile(T_d, R_d, R_d, Fname)
 
 if __name__ =="__main__":
     main()
