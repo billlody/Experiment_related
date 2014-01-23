@@ -11,19 +11,19 @@ class Thermocouple:
         self.s=None
     # calculate value of voltage difference
     def find_value(self, Tinitial, volt):
-        if volt<0.0 and Tinitial < 0.0 and Tinitial > 350.0:
+        if volt<0.0 or Tinitial < 0.0 or Tinitial > 350.0:
             raise Exception('Check','Value')
         start=xalglib.spline1dintegrate(self.s, Tinitial)
         self.diffT=1.0
         final=xalglib.spline1dintegrate(self.s, Tinitial+self.diffT)
         diffV=final-start
-        while math.fabs(diffV-volt)>0.0005:
+        while math.fabs(diffV-volt)>0.5:
             if diffV>volt:
                 self.diffT=self.diffT / 2.0
             else:
                 self.diffT=self.diffT * 1.5
-                final=xalglib.spline1dintegrate(self.s, Tinitial+self.diffT)
-                diffV=final-start
+            final=xalglib.spline1dintegrate(self.s, Tinitial+self.diffT)
+            diffV=final-start
     # read data to Temperature and temperature difference
     def read_data(self, T, V):
         factor=1000
@@ -32,7 +32,7 @@ class Thermocouple:
             Volt=float(V[i])*1000000/factor
             self.find_value(float(T[i]), Volt)
             result.append(self.diffT)
-            return T, result
+        return T, result
     # save thermalcouple data
     def read_thermalC(self):
         try:
@@ -89,13 +89,13 @@ def main():
     TC=Thermocouple()
     TC.read_thermalC()  
     print(str(len(T))+" data input")
-
+    Temp, diffT=[], []
     Temp, diffT=TC.read_data(T, CVolt)
     # output to a file
     Fname=Fobject.FileName[:-4]
     Fname=Fname+"(test).dat"
     SpecificH=[1/x for x in diffT]
-    outputfile(T_d, diffT, SpecificH, Fname, 'Temperature', 'DeltaTemperature', 'SpecificH')
+    outputfile(Temp, diffT, SpecificH, Fname, 'Temperature', 'DeltaTemperature', 'SpecificH')
         
 if __name__ =="__main__":
     main()
